@@ -6,7 +6,7 @@ import org.example.GUI.GuiModes
 
 
 val gamePanel = Draw()
-val titleText = "Hyper Pong"
+const val TITLE_TEXT = "Hyper Pong"
 val guiMode: GuiModes = GuiModes.StartMenu
 
 fun initGame(isConfigured: Boolean) {

@@ -4,7 +4,7 @@ import org.example.CONFIG_FILE_PATH
 import org.example.Controller.gamePanel
 import org.example.Controller.joinGame
 import org.example.Controller.searchGames
-import org.example.Controller.titleText
+import org.example.Controller.TITLE_TEXT
 import org.example.domain
 import org.example.playerName
 import org.example.port
@@ -29,6 +29,8 @@ class Gui(isConfigured: Boolean) : JFrame() {
     init {
         defaultCloseOperation = WindowConstants.EXIT_ON_CLOSE
         isUndecorated = true
+        val ic = ImageIcon(javaClass.getResource("/logo.png"))
+        iconImage = ic.image
 
         contentPanel.preferredSize = fSize
         contentPanel.background = Color.black
@@ -46,7 +48,7 @@ class Gui(isConfigured: Boolean) : JFrame() {
             override fun keyPressed(e: KeyEvent?) {
                 super.keyPressed(e)
                 if (e?.keyCode == KeyEvent.VK_ESCAPE) exitProcess(0)
-                if (e?.keyCode == KeyEvent.VK_SPACE) loadGamePanel()
+                if (e?.keyCode == KeyEvent.VK_BACK_SPACE) loadStartMenu()
             }
         })
     }
@@ -79,40 +81,44 @@ class Gui(isConfigured: Boolean) : JFrame() {
         loadTitle()
         // name init
         val nameTextField = getTextFieldSettings(Color.yellow)
-        nameTextField.setBounds((fSize.width - 200) / 2, (fSize.height + 200) / 3, 200, 50)
+        nameTextField.setBounds((fSize.width - 200) / 2, (fSize.height - 50) / 2, 200, 50)
         contentPanel.add(nameTextField)
 
         val namePane = getTextPane("name:", Color.yellow, 25, Dimension(200,50), StyleConstants.ALIGN_RIGHT)
-        namePane.location = Point((fSize.width - 620) / 2, (fSize.height + 10 + 200) / 3)
+        namePane.location = Point((fSize.width - 620) / 2, (fSize.height + 6 - 50) / 2)
         contentPanel.add(namePane)
         
         // server init
         val domainField = getTextFieldSettings(Color.yellow)
-        domainField.setBounds((fSize.width - 200) / 2, (fSize.height + 400) / 3, 200, 50)
+        domainField.setBounds((fSize.width - 200) / 2, (fSize.height + 100) / 2, 200, 50)
         contentPanel.add(domainField)
 
         val domainPane = getTextPane("game server:", Color.yellow, 25, Dimension(200,50), StyleConstants.ALIGN_RIGHT)
-        domainPane.location = Point((fSize.width - 620) / 2, (fSize.height + 10 + 400) / 3)
+        domainPane.location = Point((fSize.width - 620) / 2, (fSize.height + 6 + 100) / 2)
         contentPanel.add(domainPane)
 
         val portField = getTextFieldSettings(Color.yellow)
-        portField.setBounds((fSize.width - 200) / 2, (fSize.height + 600) / 3, 200, 50)
+        portField.setBounds((fSize.width - 200) / 2, (fSize.height + 250) / 2, 200, 50)
         contentPanel.add(portField)
 
         val portPane = getTextPane("port:", Color.yellow, 25, Dimension(200,50), StyleConstants.ALIGN_RIGHT)
-        portPane.location = Point((fSize.width - 620) / 2, (fSize.height + 10 + 600) / 3)
+        portPane.location = Point((fSize.width - 620) / 2, (fSize.height + 6 + 250) / 2)
         contentPanel.add(portPane)
 
         val submitBtn = getBtnSettings("submit", Color.yellow)
-        submitBtn.setBounds((fSize.width - 200) / 2, (fSize.height + 900) / 3, 200, 50)
+        submitBtn.setBounds((fSize.width - 200) / 2, (fSize.height + 400) / 2, 200, 50)
         submitBtn.border = BorderFactory.createLineBorder(Color.yellow)
         submitBtn.addActionListener {
             val file = File(CONFIG_FILE_PATH)
             val fos = FileOutputStream(file)
             val jsonObject = JSONObject()
-            jsonObject.put("name", nameTextField.text)
-            jsonObject.put("domain", domainField.text)
-            jsonObject.put("port", portField.text.toInt())
+
+            playerName = nameTextField.text
+            domain = domainField.text
+            port = portField.text.toInt()
+            jsonObject.put("name", playerName)
+            jsonObject.put("domain", domain)
+            jsonObject.put("port", port)
 
             fos.write(jsonObject.toString().toByteArray())
             fos.close()
@@ -182,7 +188,7 @@ class Gui(isConfigured: Boolean) : JFrame() {
     }
 
     private fun loadTitle() {
-        val titleArea = getTextPane(titleText,Color.blue, fSize.height / 7, Dimension(fSize.width, fSize.height / 5), StyleConstants.ALIGN_CENTER)
+        val titleArea = getTextPane(TITLE_TEXT,Color.blue, fSize.height / 7, Dimension(fSize.width, fSize.height / 5), StyleConstants.ALIGN_CENTER)
         titleArea.location = Point(0,0)
         contentPanel.add(titleArea)
     }
