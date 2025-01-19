@@ -9,8 +9,8 @@ val gamePanel = Draw()
 val titleText = "Hyper Pong"
 val guiMode: GuiModes = GuiModes.StartMenu
 
-fun initGame() {
-    Gui()
+fun initGame(isConfigured: Boolean) {
+    Gui(isConfigured)
 }
 
 fun joinGame(id: String) {
