@@ -18,7 +18,7 @@ actions:
     requestGameList -> responseGameList
     createGame -> createResponse
     joinGame -> joiningConfirmation
-    reportReady -> confirmReady
-    reportNotReady -> confirmNotReady+
+    reportReady
+    reportNotReady
     updateLobby
     error

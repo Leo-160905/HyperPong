@@ -35,6 +35,7 @@ fun startRuntimeThread() {
 
 fun connect() {
     socket = Socket(domain, port)
+    socket.tcpNoDelay = true
     send = DataOutputStream(socket.getOutputStream())
     receive = DataInputStream(socket.getInputStream())
     println("connected to server")
@@ -69,8 +70,11 @@ fun createGameRequest(name:String) {
     send.writeUTF(createRequest.toString())
 
     val response = JSONObject(receive.readUTF())
-    if(response.getString("action") == "responseGameList") {
-        if(response.getBoolean("isSuccessful")) initPlayers(response)
+    if(response.getString("action") == "createResponse") {
+        if(response.getBoolean("isSuccessful")) {
+            initPlayers(response)
+            joinedGame()
+        }
     }
 }
 
@@ -83,7 +87,10 @@ fun sendJoinRequest(id: String) {
 
     val response = JSONObject(receive.readUTF())
     if(response.getString("action") == "joiningConfirmation") {
-        if(response.getBoolean("isSuccessful")) initPlayers(response)
+        if(response.getBoolean("isSuccessful")) {
+            initPlayers(response)
+            joinedGame()
+        }
     }
 }
 
@@ -96,7 +103,6 @@ fun initPlayers(response: JSONObject) {
         players.add(Player(it.get("playerId").toString(), it.get("playerName").toString()))
         players[i].isReady = it.getBoolean("isPlayerReady")
     }
-    joinedGame()
 }
 
 fun sendReady() {
@@ -105,8 +111,11 @@ fun sendReady() {
     readyObj.put("action", "reportReady")
     send.writeUTF(readyObj.toString())
 
-    val response = JSONObject(receive.readUTF())
-    if(response.getString("action") == "confirmReady"){}
+//    val response = JSONObject(receive.readUTF())
+//    println(response.toString())
+//    if(response.getString("action") == "confirmReady"){
+//        println("success")
+//    }
 }
 
 fun sendNotReady() {
@@ -115,8 +124,12 @@ fun sendNotReady() {
     readyObj.put("action", "reportNotReady")
     send.writeUTF(readyObj.toString())
 
-    val response = JSONObject(receive.readUTF())
-    if(response.getString("action") == "confirmNotReady"){}
+//    val response = JSONObject(receive.readUTF())
+//    println(response.toString())
+//    if(response.getString("action") == "confirmNotReady"){
+//        println("success")
+//    }
+
 }
 
 fun closeConnection() {

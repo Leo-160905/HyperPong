@@ -16,7 +16,7 @@ class PlayerThread(
     private lateinit var send: DataOutputStream
     private lateinit var receive: DataInputStream
     private var isRunning = true
-    private var currentGame: Game? = null
+    private var currentGame: GameThread? = null
     override fun run() {
         try {
             while (isRunning) {
@@ -34,7 +34,7 @@ class PlayerThread(
         } catch (e: Exception) {
             println(e)
         } finally {
-
+            if(currentGame != null) currentGame!!.removePlayer(playerId)
             send.close()
             receive.close()
             client.close()
@@ -44,37 +44,9 @@ class PlayerThread(
     }
 
     private fun whileGame(message: JSONObject) {
-        if (message.getString("action") == "reportReady") {
-            var wasChanged = false
-            currentGame!!.player.forEach {
-                if (it.playerThreadId == playerId)
-                    it.isReady = true
-                wasChanged = true
-                println("Player ${it.playerName} is ready")
-            }
+        if (message.getString("action") == "reportReady" && currentGame != null) currentGame!!.changePlayerReadyState(playerId, true)
 
-            val response = JSONObject()
-            if (wasChanged) response.put("action", "confirmNotReady")
-            else response.put("action", "error")
-            send.writeUTF(response.toString())
-        }
-
-        if (message.getString("action") == "reportNotReady") {
-            var wasChanged = false
-            currentGame!!.player.forEach {
-                if (it.playerThreadId == playerId) {
-                    it.isReady = false
-                    wasChanged = false
-                    println("Player ${it.playerName} is not ready")
-                }
-                wasChanged = true
-            }
-
-            val response = JSONObject()
-            if (wasChanged) response.put("action", "confirmNotReady")
-            else response.put("action", "error")
-            send.writeUTF(response.toString())
-        }
+        if (message.getString("action") == "reportNotReady") currentGame!!.changePlayerReadyState(playerId, false)
     }
 
 
@@ -84,7 +56,7 @@ class PlayerThread(
             games.add(GameThread(Game(gameName, (games.size + 1).toString())))
 
             games[games.size - 1].addPlayer(this, playerId, message.getString("playerName"))
-            currentGame = games[games.size - 1].game
+            currentGame = games[games.size - 1]
 
             val response = JSONObject()
             response.put("action", "createResponse")
@@ -113,7 +85,7 @@ class PlayerThread(
 
 
             games[gameIndex].addPlayer(this, playerId, message.getString("playerName"))
-            currentGame = games[gameIndex].game
+            currentGame = games[gameIndex]
 
             val response = JSONObject()
             response.put("action", "joiningConfirmation")
@@ -142,7 +114,7 @@ class PlayerThread(
             println("now updating players")
             val message = JSONObject()
             message.put("action", "updateLobby")
-            message.put("players", getPlayers(currentGame!!))
+            message.put("players", getPlayers(currentGame!!.game))
 
             send.writeUTF(message.toString())
         }
