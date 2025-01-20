@@ -1,34 +1,34 @@
-package org.example.GUI
+package client.gui
 
-import org.example.CONFIG_FILE_PATH
-import org.example.Controller.gamePanel
-import org.example.Controller.joinGame
-import org.example.Controller.searchGames
-import org.example.Controller.TITLE_TEXT
-import org.example.domain
-import org.example.playerName
-import org.example.port
+import client.CONFIG_FILE_PATH
+import client.controller.*
+import client.domain
+import client.playerName
+import client.port
 import org.json.JSONObject
 import java.awt.*
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
+import java.awt.event.WindowAdapter
+import java.awt.event.WindowEvent
 import java.io.File
 import java.io.FileOutputStream
 import javax.swing.*
 import javax.swing.text.SimpleAttributeSet
 import javax.swing.text.StyleConstants
 import javax.swing.text.StyledDocument
+import javax.tools.Tool
 import kotlin.system.exitProcess
 
 class Gui(isConfigured: Boolean) : JFrame() {
-    private val fSize = Toolkit.getDefaultToolkit().screenSize
-//        private val fSize = Dimension(800,600)
+    //    private val fSize = Toolkit.getDefaultToolkit().screenSize
+    private val fSize = Dimension(800, 600)
     private val cp: Container = contentPane
     private val contentPanel = JPanel()
 
     init {
         defaultCloseOperation = WindowConstants.EXIT_ON_CLOSE
-        isUndecorated = true
+//        isUndecorated = true
         val ic = ImageIcon(javaClass.getResource("/logo.png"))
         iconImage = ic.image
 
@@ -36,7 +36,7 @@ class Gui(isConfigured: Boolean) : JFrame() {
         contentPanel.background = Color.black
         contentPanel.layout = null
 
-        if(isConfigured) loadStartMenu()
+        if (isConfigured) loadStartMenu()
         else configGame()
 
 
@@ -49,6 +49,21 @@ class Gui(isConfigured: Boolean) : JFrame() {
                 super.keyPressed(e)
                 if (e?.keyCode == KeyEvent.VK_ESCAPE) exitProcess(0)
                 if (e?.keyCode == KeyEvent.VK_BACK_SPACE) loadStartMenu()
+                if (e?.keyCode == KeyEvent.VK_ENTER) startGame()
+                if (e?.keyCode == KeyEvent.VK_A) isLeftPressed = true
+                if (e?.keyCode == KeyEvent.VK_D) isRightPressed = true
+            }
+
+            override fun keyReleased(e: KeyEvent?) {
+                super.keyReleased(e)
+                if (e?.keyCode == KeyEvent.VK_A) isLeftPressed = false
+                if (e?.keyCode == KeyEvent.VK_D) isRightPressed = false
+            }
+        })
+
+        addWindowListener(object : WindowAdapter() {
+            override fun windowClosing(e: WindowEvent?) {
+                closeConnection()
             }
         })
     }
@@ -84,16 +99,16 @@ class Gui(isConfigured: Boolean) : JFrame() {
         nameTextField.setBounds((fSize.width - 200) / 2, (fSize.height - 50) / 2, 200, 50)
         contentPanel.add(nameTextField)
 
-        val namePane = getTextPane("name:", Color.yellow, 25, Dimension(200,50), StyleConstants.ALIGN_RIGHT)
+        val namePane = getTextPane("name:", Color.yellow, 25, Dimension(200, 50), StyleConstants.ALIGN_RIGHT)
         namePane.location = Point((fSize.width - 620) / 2, (fSize.height + 6 - 50) / 2)
         contentPanel.add(namePane)
-        
+
         // server init
         val domainField = getTextFieldSettings(Color.yellow)
         domainField.setBounds((fSize.width - 200) / 2, (fSize.height + 100) / 2, 200, 50)
         contentPanel.add(domainField)
 
-        val domainPane = getTextPane("game server:", Color.yellow, 25, Dimension(200,50), StyleConstants.ALIGN_RIGHT)
+        val domainPane = getTextPane("game server:", Color.yellow, 25, Dimension(200, 50), StyleConstants.ALIGN_RIGHT)
         domainPane.location = Point((fSize.width - 620) / 2, (fSize.height + 6 + 100) / 2)
         contentPanel.add(domainPane)
 
@@ -101,7 +116,7 @@ class Gui(isConfigured: Boolean) : JFrame() {
         portField.setBounds((fSize.width - 200) / 2, (fSize.height + 250) / 2, 200, 50)
         contentPanel.add(portField)
 
-        val portPane = getTextPane("port:", Color.yellow, 25, Dimension(200,50), StyleConstants.ALIGN_RIGHT)
+        val portPane = getTextPane("port:", Color.yellow, 25, Dimension(200, 50), StyleConstants.ALIGN_RIGHT)
         portPane.location = Point((fSize.width - 620) / 2, (fSize.height + 6 + 250) / 2)
         contentPanel.add(portPane)
 
@@ -123,12 +138,13 @@ class Gui(isConfigured: Boolean) : JFrame() {
             fos.write(jsonObject.toString().toByteArray())
             fos.close()
 
+            connect()
             loadStartMenu()
         }
         contentPanel.add(submitBtn)
 
 
-        if(!isInitial) {
+        if (!isInitial) {
             loadReturnBtn()
             nameTextField.text = playerName
             domainField.text = domain
@@ -164,13 +180,49 @@ class Gui(isConfigured: Boolean) : JFrame() {
         gameNameField.setBounds((fSize.width - 200) / 2, (fSize.height - 50) / 2, 200, 50)
         contentPanel.add(gameNameField)
 
-        val gameNamePane = getTextPane("Game name:", Color.yellow, 25, Dimension(200,50), StyleConstants.ALIGN_RIGHT)
+        val gameNamePane = getTextPane("Game name:", Color.yellow, 25, Dimension(200, 50), StyleConstants.ALIGN_RIGHT)
         gameNamePane.location = Point((fSize.width - 620) / 2, (fSize.height + 6 - 50) / 2)
         contentPanel.add(gameNamePane)
 
         val createBtn = getBtnSettings("create", Color.yellow)
         createBtn.setBounds((fSize.width - 200) / 2, (fSize.height + 100) / 2, 200, 50)
+        createBtn.addActionListener {
+            createGameRequest(gameNameField.text)
+        }
         contentPanel.add(createBtn)
+    }
+
+    fun gameLobby() {
+        clearScreen()
+        loadTitle()
+
+        val name = if(isPlayerReady) "cancel" else "ready"
+        val color = if(isPlayerReady) Color.red else Color.GREEN
+        val readyBtn = getBtnSettings(name, color)
+        readyBtn.setBounds((fSize.width - 200) / 2, (fSize.height - 50) / 2, 200, 50)
+        readyBtn.addActionListener {
+            if (readyBtn.text == "ready") {
+                readyBtn.text = "cancel"
+                readyBtn.border = BorderFactory.createLineBorder(Color.red)
+                sendReady()
+            } else {
+                readyBtn.text = "ready"
+                readyBtn.border = BorderFactory.createLineBorder(Color.GREEN)
+                sendNotReady()
+            }
+        }
+        contentPanel.add(readyBtn)
+
+        for (i in 0 until players.size) {
+            val playerPane = getTextPane(players[i].playerName, Color.yellow, 25, Dimension(200, 50), StyleConstants.ALIGN_CENTER)
+            playerPane.location = Point((fSize.width - 200) / 2, (fSize.height + 100 + i * 150) / 2)
+            playerPane.border = if(players[i].isReady) BorderFactory.createLineBorder(Color.GREEN) else BorderFactory.createLineBorder(Color.RED)
+            contentPanel.add(playerPane)
+        }
+
+        Toolkit.getDefaultToolkit().sync()
+        contentPanel.revalidate()
+        contentPanel.repaint()
     }
 
     private fun clearScreen() {
@@ -188,12 +240,24 @@ class Gui(isConfigured: Boolean) : JFrame() {
     }
 
     private fun loadTitle() {
-        val titleArea = getTextPane(TITLE_TEXT,Color.blue, fSize.height / 7, Dimension(fSize.width, fSize.height / 5), StyleConstants.ALIGN_CENTER)
-        titleArea.location = Point(0,0)
+        val titleArea = getTextPane(
+            TITLE_TEXT,
+            Color.blue,
+            fSize.height / 7,
+            Dimension(fSize.width, fSize.height / 5),
+            StyleConstants.ALIGN_CENTER
+        )
+        titleArea.location = Point(0, 0)
         contentPanel.add(titleArea)
     }
 
-    private fun getTextPane(text: String, textColor: Color, fontSize: Int, paneDimension: Dimension, pos: Int): JTextPane {
+    private fun getTextPane(
+        text: String,
+        textColor: Color,
+        fontSize: Int,
+        paneDimension: Dimension,
+        pos: Int
+    ): JTextPane {
         val pane = JTextPane()
 
         val doc: StyledDocument = pane.styledDocument

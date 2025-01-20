@@ -1,7 +1,7 @@
-package org.example
+package client
 
 
-import org.example.Controller.initGame
+import client.controller.initGame
 import org.json.JSONObject
 import java.io.File
 import java.nio.file.Files

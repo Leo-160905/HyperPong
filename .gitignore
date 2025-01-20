@@ -37,3 +37,4 @@ build/
 ### Mac OS ###
 .DS_Store
 /config.json
+/src/main/resources/META-INF/MANIFEST.MF

@@ -1,0 +1,24 @@
+pre game
+{
+    "action":"",
+    "gameId":"",
+    "gameName":""
+    "isSuccessful":true/false
+    "playerName": ""
+    "isPlayerReady":true/false
+    "games": [
+        {"ńame":"","id":""}
+    ]
+    "players": [
+        {"playerName":"", "playerId":""}
+    ]
+}
+
+actions:
+    requestGameList -> responseGameList
+    createGame -> createResponse
+    joinGame -> joiningConfirmation
+    reportReady -> confirmReady
+    reportNotReady -> confirmNotReady+
+    updateLobby
+    error
